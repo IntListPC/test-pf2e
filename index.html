@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PCList PF2e v4</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="main-menu-open app-booting">
+
+<div id="dice-log" style="position: fixed; bottom: 20px; left: 10px; right: auto; width: auto; max-width: calc(100vw - 20px); pointer-events: none; z-index: 5000; display: flex; flex-direction: column; align-items: flex-start;"></div>
+<div id="attack-note-toolbar" class="attack-note-toolbar">
+    <button type="button" class="attack-note-tool" onclick="formatAttackNoteSelection('bold')" title="Жирный">B</button>
+    <button type="button" class="attack-note-tool" onclick="formatAttackNoteSelection('roll')" title="Кнопка броска">🎲</button>
+    <button type="button" class="attack-note-tool" onclick="formatAttackNoteSelection('link')" title="Кнопка-ссылка">🔗</button>
+</div>
+<button type="button" id="attack-dice-fab" class="attack-dice-fab" onclick="toggleAttackDiceWheel()" title="Кубики">◇</button>
+<div id="attack-dice-wheel" class="attack-dice-wheel">
+    <button type="button" class="attack-dice-center" onclick="commitAttackDiceWheel()">×</button>
+    <button type="button" class="attack-dice-choice" data-die="2" style="left:68px; top:0;" onpointerdown="startAttackDieHold(event, 2)" onpointerup="endAttackDieHold(event)" onpointerleave="endAttackDieHold(event)" onpointercancel="endAttackDieHold(event)" onclick="addAttackDie(2)">к2<small></small></button>
+    <button type="button" class="attack-dice-choice" data-die="4" style="left:116px; top:20px;" onpointerdown="startAttackDieHold(event, 4)" onpointerup="endAttackDieHold(event)" onpointerleave="endAttackDieHold(event)" onpointercancel="endAttackDieHold(event)" onclick="addAttackDie(4)">к4<small></small></button>
+    <button type="button" class="attack-dice-choice" data-die="6" style="left:136px; top:68px;" onpointerdown="startAttackDieHold(event, 6)" onpointerup="endAttackDieHold(event)" onpointerleave="endAttackDieHold(event)" onpointercancel="endAttackDieHold(event)" onclick="addAttackDie(6)">к6<small></small></button>
+    <button type="button" class="attack-dice-choice" data-die="8" style="left:116px; top:116px;" onpointerdown="startAttackDieHold(event, 8)" onpointerup="endAttackDieHold(event)" onpointerleave="endAttackDieHold(event)" onpointercancel="endAttackDieHold(event)" onclick="addAttackDie(8)">к8<small></small></button>
+    <button type="button" class="attack-dice-choice" data-die="10" style="left:68px; top:136px;" onpointerdown="startAttackDieHold(event, 10)" onpointerup="endAttackDieHold(event)" onpointerleave="endAttackDieHold(event)" onpointercancel="endAttackDieHold(event)" onclick="addAttackDie(10)">к10<small></small></button>
+    <button type="button" class="attack-dice-choice" data-die="12" style="left:20px; top:116px;" onpointerdown="startAttackDieHold(event, 12)" onpointerup="endAttackDieHold(event)" onpointerleave="endAttackDieHold(event)" onpointercancel="endAttackDieHold(event)" onclick="addAttackDie(12)">к12<small></small></button>
+    <button type="button" class="attack-dice-choice" data-die="20" style="left:0; top:68px;" onpointerdown="startAttackDieHold(event, 20)" onpointerup="endAttackDieHold(event)" onpointerleave="endAttackDieHold(event)" onpointercancel="endAttackDieHold(event)" onclick="addAttackDie(20)">к20<small></small></button>
+    <button type="button" class="attack-dice-choice" data-die="100" style="left:20px; top:20px;" onpointerdown="startAttackDieHold(event, 100)" onpointerup="endAttackDieHold(event)" onpointerleave="endAttackDieHold(event)" onpointercancel="endAttackDieHold(event)" onclick="addAttackDie(100)">к100<small></small></button>
+    <div id="attack-dice-summary" class="attack-dice-summary"></div>
+</div>
+
+<div id="characterMenu" class="character-menu">
+    <div class="character-menu-inner">
+        <div class="character-menu-header">
+            <h1 class="character-menu-title">Персонажи</h1>
+            <button type="button" id="cloud-panel-toggle" class="cloud-panel-toggle" onclick="toggleCloudAuthPanel()" title="Google" aria-label="Google" aria-expanded="false">G</button>
+        </div>
+        <div id="cloud-auth-bar" class="cloud-auth-bar">
+            <div class="cloud-auth-text">
+                <div id="cloud-auth-status" class="cloud-auth-status">Локальное сохранение</div>
+                <div id="cloud-sync-status" class="cloud-sync-status">Supabase подключается после входа</div>
+            </div>
+            <div class="cloud-auth-actions">
+                <button type="button" id="cloud-login-btn" class="cloud-auth-btn primary" onclick="signInWithGoogle()">Google</button>
+                <button type="button" id="cloud-logout-btn" class="cloud-auth-btn" onclick="signOutCloud()" style="display:none">Выйти</button>
+            </div>
+        </div>
+        <div class="character-menu-toolbar">
+            <div id="character-count" class="character-count">0/10</div>
+            <div class="character-toolbar-actions">
+                <button type="button" id="character-upload-btn" class="btn-sec character-menu-icon-btn" onclick="startImportCharacterAsNew()" title="Загрузить персонажа" aria-label="Загрузить персонажа"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11"></path><path d="M8 11l4 4 4-4"></path><path d="M5 20h14"></path></svg></button>
+                <button type="button" id="character-delete-btn" class="btn-sec character-menu-icon-btn" onclick="toggleCharacterDeleteMode()" title="Удалить персонажа">✕</button>
+            </div>
+        </div>
+        <div id="character-list" class="character-list"><div class="character-empty">Загружаю список персонажей...</div></div>
+    </div>
+</div>
+
+<div class="fixed-header">
+    <div class="main-wrapper">
+        <div class="header-banner">
+            <div class="header-main-row">
+                <div class="avatar-box" onclick="openModal('avatarMenuModal')">
+                    <img id="avatar-img" src="">
+                    <span id="avatar-plus">👤</span>
+                </div>
+                
+                <div class="header-info" onclick="openModal('profileModal')">
+                    <h1 id="disp-name">Имя Героя</h1>
+                    <p id="disp-meta">Народ — Класс</p>
+                    <div class="exp-container"><div id="exp-fill" class="exp-fill"></div></div>
+                </div>
+
+                <div class="stat-badge lvl-main" onclick="openModal('profileModal')">
+                    <div id="lvl-up-btn" class="lvl-up-star" onclick="event.stopPropagation(); levelUp()">↑</div>
+                    <span id="disp-lvl" class="v">1</span>
+                    <span class="l">Level</span>
+                </div>
+            </div>
+
+            <div class="header-sub-row">
+                <div class="stats-badges-mini">
+                    <div class="stat-badge-sm" onclick="openArmorPanel()">
+                        <span id="disp-ac-head" class="v">10</span>
+                        <span class="l">КЗ</span>
+                    </div>
+                    <div id="shield-btn-main" class="stat-badge-sm shield-btn" onclick="openShieldPanel()">
+                        <span id="disp-shield-bonus" class="v">+0</span>
+                        <span class="l">Щит</span>
+                    </div>
+                    <div class="stat-badge-sm" onclick="openModal('profileModal')">
+                        <span id="disp-speed-head" class="v">25</span>
+                        <span class="l">Шаг</span>
+                    </div>
+                </div>
+
+                <div style="flex: 1;"></div>
+
+                <div class="hero-points-wrapper">
+                    <span class="hero-label">Героизм</span>
+                    <div class="hero-points-bar">
+                        <div class="dot hero-dot" onclick="setHeroPoints(1)"></div>
+                        <div class="dot hero-dot" onclick="setHeroPoints(2)"></div>
+                        <div class="dot hero-dot" onclick="setHeroPoints(3)"></div>
+                    </div>
+                </div>
+                <button type="button" id="header-attack-settings-btn" class="header-attack-settings-btn" onclick="openAttackSettingsModal()" title="Настройки атаки">⚙</button>
+            </div>
+
+            <div class="banner-hp-row">
+                <div class="hp-main-line">
+                    <div class="rest-btn-mini" onclick="openRestMenu()">🌙</div>
+                    <div id="disp-hp" class="hp-numbers v" onclick="openModal('hpModal')">0 / 0 оз</div>
+                    <div class="hp-bar-container" onclick="openModal('hpModal')">
+                        <div id="hp-fill-bar" class="banner-hp-fill"></div>
+                    </div>
+                </div>
+                <div id="shield-bar-wrap" class="shield-bar-container" onclick="openModal('hpModal')">
+                    <div id="shield-bar-fill" class="shield-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <button class="nav-btn active" id="btn-p0" onclick="navClick(0)">Характеристики</button>
+        <button class="nav-btn" id="btn-p1" onclick="navClick(1)">Атаки</button>
+        <button class="nav-btn" id="btn-p2" onclick="navClick(2)">Фиты</button>
+        <button class="nav-btn" id="btn-p3" onclick="navClick(3)">Снаряжение</button>
+        <button class="nav-btn" id="btn-p4" onclick="navClick(4)">Личность</button>
+        <button class="nav-btn" id="btn-p5" onclick="navClick(5)">Магия</button>
+        <button type="button" id="global-reorder-btn" class="global-reorder-btn" onclick="toggleMobileReorderMode()" title="Перемещение пальцем">↕</button>
+        <button type="button" id="header-collapse-btn" class="header-collapse-btn" onclick="toggleHeaderCollapsed()" title="Свернуть шапку">▲</button>
+    </div>
+</div>
+
+<div class="layout-container">
+    
+    <div class="side-panel-left">
+        <div id="static-combat-page">
+        </div>
+    </div>
+
+    <div class="pages-slider-wrap">
+        <div id="pages-slider" class="pages-slider">
+            
+            <div class="page" id="page-0">
+                <div class="content-padding" id="combat-page-content">
+                    <div class="saves-block">
+                        <div class="save-card"><b>СТОЙКОСТЬ</b><div class="save-btn v" onclick="rollDice('Стойкость', this.innerText)" id="val-fort">+0</div><div class="dot-container" data-save="fort" style="justify-content:center"><div class="dot" onclick="setSaveProf('fort', 1)"></div><div class="dot" onclick="setSaveProf('fort', 2)"></div><div class="dot" onclick="setSaveProf('fort', 3)"></div><div class="dot" onclick="setSaveProf('fort', 4)"></div></div></div>
+                        <div class="save-card"><b>РЕФЛЕКС</b><div class="save-btn v" onclick="rollDice('Рефлекс', this.innerText)" id="val-ref">+0</div><div class="dot-container" data-save="ref" style="justify-content:center"><div class="dot" onclick="setSaveProf('ref', 1)"></div><div class="dot" onclick="setSaveProf('ref', 2)"></div><div class="dot" onclick="setSaveProf('ref', 3)"></div><div class="dot" onclick="setSaveProf('ref', 4)"></div></div></div>
+                        <div class="save-card"><b>ВОЛЯ</b><div class="save-btn v" onclick="rollDice('Воля', this.innerText)" id="val-will">+0</div><div class="dot-container" data-save="will" style="justify-content:center"><div class="dot" onclick="setSaveProf('will', 1)"></div><div class="dot" onclick="setSaveProf('will', 2)"></div><div class="dot" onclick="setSaveProf('will', 3)"></div><div class="dot" onclick="setSaveProf('will', 4)"></div></div></div>
+                        <div class="save-card"><b>ВНИМАНИЕ</b><div class="save-btn v" onclick="rollDice('Внимание', this.innerText)" id="val-perc">+0</div><div class="dot-container" data-save="perc" style="justify-content:center"><div class="dot" onclick="setSaveProf('perc', 1)"></div><div class="dot" onclick="setSaveProf('perc', 2)"></div><div class="dot" onclick="setSaveProf('perc', 3)"></div><div class="dot" onclick="setSaveProf('perc', 4)"></div></div></div>
+                    </div>
+                    <div id="attr-list" class="attr-grid"></div>
+                </div>
+            </div>
+
+            <div class="page" id="page-1">
+                <div class="content-padding">
+                    <div id="attack-map-bar" class="attack-map-bar">
+                        <div class="attack-map-info">
+                            <span class="attack-map-title">Штраф атак</span>
+                            <div class="attack-map-dots">
+                                <button type="button" class="attack-map-dot" data-attack-map-dot="1" onclick="setAttackMapPenaltyCount(1)" title="Первый штраф"></button>
+                                <button type="button" class="attack-map-dot" data-attack-map-dot="2" onclick="setAttackMapPenaltyCount(2)" title="Второй штраф"></button>
+                            </div>
+                            <button type="button" id="attack-dc-btn" class="attack-map-btn attack-dc-btn" onclick="openAttackDcModal()">СЛ 10</button>
+                        </div>
+                        <div class="attack-courage-dots" aria-label="Кураж">
+                            <button type="button" class="attack-courage-dot" data-attack-courage-dot="1" onclick="setAttackCourageCount(1)" title="Кураж 1"></button>
+                            <button type="button" class="attack-courage-dot" data-attack-courage-dot="2" onclick="setAttackCourageCount(2)" title="Кураж 2"></button>
+                            <button type="button" class="attack-courage-dot" data-attack-courage-dot="3" onclick="setAttackCourageCount(3)" title="Кураж 3"></button>
+                        </div>
+                        <div class="attack-map-controls">
+                            <button type="button" class="attack-map-btn" onclick="resetAttackMapPenalty()">Раунд</button>
+                            <button type="button" class="attack-map-btn attack-map-gear" onclick="openAttackSettingsModal()" title="Настройки атаки">⚙</button>
+                        </div>
+                    </div>
+                    <div id="attacks-list"></div>
+                    <div class="attack-add-delete-row">
+                        <button type="button" onclick="addNewAttack()" class="btn-sec attack-add-btn">+ ДОБАВИТЬ АТАКУ</button>
+                        <button type="button" onclick="toggleAttackDeleteMode()" class="btn-sec attack-delete-btn">УДАЛИТЬ</button>
+                    </div>
+                    <div id="attack-quick-feats-section" class="attack-quick-feats-section">
+                        <div id="attack-quick-feats-list" class="attack-quick-feats-list"></div>
+                    </div>
+                    <div id="attack-consumables-section" class="attack-consumables-section">
+                        <div id="attack-consumables-list" class="attack-consumables-list"></div>
+                    </div>
+                    <div class="attack-notes-divider"></div>
+                    <div class="attack-notes-section-title">Заметки</div>
+                    <div class="attack-notes-shell">
+                        <div id="attack-notes-editor" class="attack-notes-editor" contenteditable="true" spellcheck="false" oninput="saveAttackNotesFromEditor()" onmouseup="queueAttackNotesToolbar()" onkeyup="queueAttackNotesToolbar()" onpaste="pastePlainTextIntoAttackNotes(event)" onclick="handleAttackNotesClick(event)"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="page-2">
+                <div class="content-padding">
+                    <div class="feats-shell">
+                        <div id="feat-tabs" class="feat-tabs"></div>
+                        <div class="feats-level-line"><span>Доступно на</span><b id="feats-current-level">1</b><span>Уровне</span></div>
+                        <div id="feats-list" class="feats-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="page-3">
+                <div class="content-padding">
+                    <div class="equipment-shell">
+                        <div class="equipment-top">
+                            <div class="equipment-bulk-widget">
+                                <div id="equipment-bulk-left" class="equipment-bulk-circle" onclick="toggleEquipmentBackpack()" title="Включить или выключить рюкзак"><b>0</b><span>ещё</span></div>
+                                <div class="equipment-bulk-cap" onclick="openEquipmentBulkSettingsModal()" title="Настроить бонус или штраф к максимальному весу"><b id="equipment-bulk-max">10</b><span>макс балк</span><i id="equipment-backpack-indicator" class="equipment-backpack-indicator"></i></div>
+                            </div>
+                            <div class="equipment-side">
+                                <button type="button" id="equipment-coins" class="equipment-coins-btn" onclick="openCurrencyModal()">0,00</button>
+                            </div>
+                        </div>
+                        <div id="equipment-tabs" class="feat-tabs equipment-tabs"></div>
+                        <div id="equipment-list" class="equipment-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="page-4">
+                <div class="content-padding">
+                    <div class="personality-shell">
+                        <div class="personality-hero">
+                            <div class="personality-portrait" onclick="openModal('avatarMenuModal')" title="Портрет персонажа">
+                                <img id="personality-portrait-img" src="" alt="">
+                                <span id="personality-portrait-fallback">👤</span>
+                            </div>
+                            <div id="personality-profile-name" class="personality-profile-name">Герой</div>
+                            <div id="personality-profile-meta" class="personality-profile-meta">Народ — Класс</div>
+                            <button type="button" class="personality-notes-button" onclick="openPersonalityNotesMenu()" title="Заметки">
+                                <b>📖</b>
+                                <span>Заметки</span>
+                            </button>
+                            <textarea id="persona-note-1" class="personality-note-store"></textarea>
+                            <textarea id="persona-note-2" class="personality-note-store"></textarea>
+                            <textarea id="persona-note-3" class="personality-note-store"></textarea>
+                            <textarea id="persona-note-4" class="personality-note-store"></textarea>
+                            <textarea id="persona-note-5" class="personality-note-store"></textarea>
+                            <textarea id="persona-note-6" class="personality-note-store"></textarea>
+                            <div class="stat-badge lvl-main personality-level-badge" onclick="openModal('profileModal')" title="Профиль и уровень">
+                                <div id="personality-lvl-up-btn" class="lvl-up-star personality-lvl-up-star" onclick="event.stopPropagation(); levelUp()">↑</div>
+                                <b id="personality-level" class="v">1</b>
+                                <span class="l">Level</span>
+                            </div>
+                            <div class="personality-exp-block">
+                                <div class="personality-exp-text"><span>Опыт</span><b id="personality-exp-text">0 / 1000</b></div>
+                                <div class="personality-exp-track"><div id="personality-exp-fill" class="personality-exp-fill"></div></div>
+                            </div>
+                        </div>
+
+                        <div id="personality-section-origin" class="personality-section">
+                            <button type="button" class="personality-section-head" onclick="togglePersonalitySection('origin')">
+                                <span class="personality-section-title">Происхождение и Внешность</span>
+                                <span class="personality-section-arrow">▼</span>
+                            </button>
+                            <div id="personality-origin-body" class="personality-section-body">
+                            <div class="personality-grid">
+                                <div class="personality-field"><label class="l">Этнос</label><input type="text" id="persona-ethnos" oninput="saveAll()"></div>
+                                <div class="personality-field"><label class="l">Национальность</label><input type="text" id="persona-nationality" oninput="saveAll()"></div>
+                                <div class="personality-field wide"><label class="l">Место рождения</label><input type="text" id="persona-birthplace" oninput="saveAll()"></div>
+                            </div>
+                            <div class="personality-grid four">
+                                <div class="personality-field"><label class="l">Возраст</label><input type="text" id="persona-age" oninput="saveAll()"></div>
+                                <div class="personality-field"><label class="l">Пол</label><input type="text" id="persona-gender" oninput="saveAll()"></div>
+                                <div class="personality-field"><label class="l">Рост</label><input type="text" id="persona-height" oninput="saveAll()"></div>
+                                <div class="personality-field"><label class="l">Вес</label><input type="text" id="persona-weight" oninput="saveAll()"></div>
+                            </div>
+                            <div class="personality-grid">
+                                <div class="personality-field wide"><label class="l">Внешность</label><textarea id="persona-appearance" maxlength="1200" oninput="saveAll()"></textarea></div>
+                            </div>
+                            </div>
+                        </div>
+
+                        <div id="personality-section-personality" class="personality-section">
+                            <button type="button" class="personality-section-head" onclick="togglePersonalitySection('personality')">
+                                <span class="personality-section-title">Личность</span>
+                                <span class="personality-section-arrow">▼</span>
+                            </button>
+                            <div id="personality-personality-body" class="personality-section-body">
+                            <div class="personality-grid">
+                                <div class="personality-field"><label class="l">Отношение</label><input type="text" id="persona-attitude" oninput="saveAll()"></div>
+                                <div class="personality-field"><label class="l">Божество и философия</label><input type="text" id="persona-deity" oninput="saveAll()"></div>
+                                <div class="personality-field tall"><label class="l">Эдикты</label><textarea id="persona-edicts" maxlength="1200" oninput="saveAll()"></textarea></div>
+                                <div class="personality-field tall"><label class="l">Анафемы</label><textarea id="persona-anathema" maxlength="1200" oninput="saveAll()"></textarea></div>
+                                <div class="personality-field wide"><label class="l">Любит</label><textarea id="persona-likes" maxlength="1200" oninput="saveAll()"></textarea></div>
+                                <div class="personality-field wide"><label class="l">Не любит</label><textarea id="persona-dislikes" maxlength="1200" oninput="saveAll()"></textarea></div>
+                                <div class="personality-field wide"><label class="l">Меткие фразы</label><textarea id="persona-catchphrases" maxlength="1600" oninput="saveAll()"></textarea></div>
+                            </div>
+                            </div>
+                        </div>
+
+                        <div id="personality-section-proficiency" class="personality-section">
+                            <button type="button" class="personality-section-head" onclick="togglePersonalitySection('proficiency')">
+                                <span class="personality-section-title">Владения и Языки</span>
+                                <span class="personality-section-arrow">▼</span>
+                            </button>
+                            <div id="personality-proficiency-body" class="personality-section-body">
+                                <div class="personality-grid">
+                                    <div class="personality-field wide"><label class="l">Языки</label><textarea id="prof-languages" maxlength="1600" oninput="saveAll()" placeholder="Все языки персонажа"></textarea></div>
+                                </div>
+                                <div class="proficiency-group">
+                                    <div class="proficiency-title">Умения использовать броню</div>
+                                    <div id="armor-proficiency-list" class="proficiency-list"></div>
+                                </div>
+                                <div class="proficiency-group">
+                                    <div class="proficiency-title">Умения в оружии</div>
+                                    <div id="weapon-proficiency-list" class="proficiency-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="page-5">
+                <div class="content-padding">
+                    <div class="magic-shell">
+                        <div class="magic-card">
+                            <div class="magic-head">
+                                <div>
+                                    <div class="magic-title">Магия</div>
+                                    <div class="magic-sub">Ур. <span id="magic-current-level">1</span> · ранг <span id="magic-max-rank">1</span></div>
+                                </div>
+                                <button type="button" class="magic-reset-btn" onclick="resetSpellResources()">Сброс</button>
+                            </div>
+                            <div id="magic-traditions" class="magic-traditions"></div>
+                            <div class="magic-casting-row">
+                                <div class="equipment-segment">
+                                    <button type="button" id="magic-prepared-btn" onclick="setMagicCastingType('prepared')">Подготовл.</button>
+                                    <button type="button" id="magic-spontaneous-btn" onclick="setMagicCastingType('spontaneous')">Спонтан.</button>
+                                </div>
+                                <div class="equipment-segment">
+                                    <button type="button" id="magic-attack-stat-btn" onclick="openMagicSettingsModal()">Настр.</button>
+                                </div>
+                            </div>
+                            <div class="magic-settings-grid">
+                                <div>
+                                    <label class="l">Характ.</label>
+                                    <select id="magic-stat" onchange="saveMagicSettingsFromPage()">
+                                        <option value="int">ИНТ</option><option value="wis">МУД</option><option value="cha">ХАР</option>
+                                        <option value="str">СИЛ</option><option value="dex">ЛОВ</option><option value="con">ТЕЛ</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="l">Бонус</label>
+                                    <input type="number" id="magic-item-bonus" value="0" oninput="saveMagicSettingsFromPage()">
+                                </div>
+                                <div class="magic-focus-field">
+                                    <label class="l">Фокус</label>
+                                    <input type="number" id="magic-focus-max" min="0" max="3" value="1" oninput="saveMagicSettingsFromPage()">
+                                </div>
+                            </div>
+                            <div class="magic-prof-row">
+                                <span>Умение в магии</span>
+                                <div class="dot-container" id="magic-prof-dots"></div>
+                            </div>
+                            <div class="magic-derived-grid">
+                                <div class="magic-derived-pill"><span>Атака</span><b id="magic-spell-attack">+0</b></div>
+                                <div class="magic-derived-pill"><span>СЛ</span><b id="magic-spell-dc">10</b></div>
+                            </div>
+                        </div>
+                        <div class="magic-card">
+                            <div class="magic-section-title">Ячейки заклинаний</div>
+                            <div id="magic-slots-list" class="magic-slots-list"></div>
+                        </div>
+                        <div class="magic-card">
+                            <div class="magic-head">
+                                <div class="magic-section-title" style="margin-bottom:0;">Заклинания</div>
+                                <button type="button" class="magic-reset-btn" onclick="openSpellEditor()">+</button>
+                            </div>
+                            <div id="magic-spells-list" class="magic-spell-groups"></div>
+                            <button type="button" class="magic-add-btn" onclick="openSpellEditor()">+ Добавить заклинание</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Модалка Атаки -->
+<div id="attackModal" class="modal"><div class="modal-content attack-modal-centered">
+    <h3>Настройки атаки</h3>
+    <input type="hidden" id="atk-id">
+
+    <label class="l">Название</label>
+    <input type="text" id="atk-name" placeholder="Длинный меч">
+
+    <div class="atk-modal-grid">
+        <div>
+            <label class="l">Характ.</label>
+            <select id="atk-stat">
+                <option value="str">СИЛ</option><option value="dex">ЛОВ</option><option value="con">ТЕЛ</option>
+                <option value="int">ИНТ</option><option value="wis">МУД</option><option value="cha">ХАР</option>
+            </select>
+        </div>
+        <div>
+            <label class="l">Тип оружия</label>
+            <select id="atk-weapon-group"></select>
+        </div>
+        <div>
+            <label class="l">Бонус</label>
+            <input type="number" id="atk-item" value="0">
+        </div>
+    </div>
+
+    <div class="atk-modal-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+        <div>
+            <label class="l">Урон</label>
+            <input type="text" id="atk-dmg" oninput="this.value=this.value.replace(/d/gi, 'к')" placeholder="1к8+4">
+        </div>
+        <div>
+            <label class="l">Крит</label>
+            <input type="text" id="atk-crit" oninput="this.value=this.value.replace(/d/gi, 'к')" placeholder="2к8+8">
+        </div>
+        <div id="atk-map-penalty-field" class="atk-map-penalty-field">
+            <label class="l">ШМА</label>
+            <input type="number" id="atk-map-penalty" value="-5" step="1">
+        </div>
+    </div>
+
+    <select id="atk-type"></select>
+
+    <div class="equipment-segment">
+        <button type="button" id="atk-melee-btn" onclick="setAttackRange('melee')">Ближний</button>
+        <button type="button" id="atk-ranged-btn" onclick="setAttackRange('ranged')">Дальний</button>
+    </div>
+    <input type="hidden" id="atk-range" value="melee">
+    <div id="atk-ammo-settings" class="attack-ammo-settings">
+        <label class="l">Снаряды</label>
+        <select id="atk-ammo-item"></select>
+        <label class="equipment-inline-toggle" for="atk-charges-enabled">
+            <input type="checkbox" id="atk-charges-enabled" onchange="syncAttackChargeSection()">
+            <span>Использовать заряды</span>
+        </label>
+        <div id="atk-charge-settings" class="attack-ammo-settings">
+            <label class="l">Количество зарядов</label>
+            <input type="number" id="atk-charge-max" min="1" step="1" value="1">
+            <input type="hidden" id="atk-charge-current" value="0">
+        </div>
+    </div>
+
+    <button type="button" id="atk-tags-toggle-btn" class="btn-sec atk-modal-tags-toggle" onclick="toggleAttackTagsSection()">ХЕШТЕГИ ▼</button>
+    <div id="atk-tags-section" class="atk-modal-tags-wrap">
+        <label class="l">Хэштеги удара</label>
+        <div id="atk-tags-checklist" class="atk-modal-tags-grid"></div>
+    </div>
+
+    <div class="atk-modal-actions">
+        <button onclick="saveAttack()" class="btn-primary">СОХРАНИТЬ</button>
+        <button onclick="closeModal('attackModal')" class="btn-sec">ОТМЕНА</button>
+    </div>
+</div></div>
+
+<div id="attackSettingsModal" class="modal"><div class="modal-content">
+    <h3>Настройки атак</h3>
+    <label class="attack-setting-toggle" for="attack-map-enabled">
+        <input type="checkbox" id="attack-map-enabled" checked>
+        <span>Авто-ШМА после атаки</span>
+    </label>
+    <label class="l">Общий штраф по умолчанию</label>
+    <input type="number" id="attack-map-penalty" value="-5" step="1">
+    <div class="feat-view-meta">Если авто-ШМА выключен, круги не переключаются после броска атаки, но их всё ещё можно менять вручную. Общий штраф ставится новым атакам и старым атакам без своей настройки.</div>
+    <button onclick="saveAttackSettings()" class="btn-primary">СОХРАНИТЬ</button>
+    <button onclick="closeModal('attackSettingsModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="attackDcModal" class="modal"><div class="modal-content">
+    <h3>СЛ атак</h3>
+    <label class="l">Главная характеристика</label>
+    <select id="attack-dc-stat" onchange="updateAttackDcPreview()">
+        <option value="str">СИЛ</option><option value="dex">ЛОВ</option><option value="con">ТЕЛ</option>
+        <option value="int">ИНТ</option><option value="wis">МУД</option><option value="cha">ХАР</option>
+    </select>
+    <label class="l">Бонус</label>
+    <input type="number" id="attack-dc-bonus" value="0" oninput="updateAttackDcPreview()">
+    <div id="attack-dc-preview" class="equipment-derived-note" style="display:block;">СЛ 10</div>
+    <button onclick="saveAttackDcSettings()" class="btn-primary">СОХРАНИТЬ</button>
+    <button onclick="closeModal('attackDcModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="attackNotesModal" class="modal"><div class="modal-content">
+    <h3>Заметки по атакам</h3>
+    <label class="l">Текст</label>
+    <textarea id="attack-notes-textarea" oninput="attackNotes = this.value; updateAttackNotesCount(); syncAttackNotesPreview();"></textarea>
+    <div id="attack-notes-count" class="attack-notes-count">0</div>
+    <button onclick="saveAttackNotes()" class="btn-primary">СОХРАНИТЬ</button>
+    <button onclick="closeModal('attackNotesModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="personalityNotesMenuModal" class="modal"><div class="modal-content personality-notes-menu-modal">
+    <h3>Заметки</h3>
+    <div class="personality-notes-menu-grid">
+        <button type="button" class="personality-note-btn" onclick="openPersonalityNote(1)" title="Заметка 1"><b>📖</b><span id="personality-note-title-1">1</span></button>
+        <button type="button" class="personality-note-btn" onclick="openPersonalityNote(2)" title="Заметка 2"><b>📖</b><span id="personality-note-title-2">2</span></button>
+        <button type="button" class="personality-note-btn" onclick="openPersonalityNote(3)" title="Заметка 3"><b>📖</b><span id="personality-note-title-3">3</span></button>
+        <button type="button" class="personality-note-btn" onclick="openPersonalityNote(4)" title="Заметка 4"><b>📖</b><span id="personality-note-title-4">4</span></button>
+        <button type="button" class="personality-note-btn" onclick="openPersonalityNote(5)" title="Заметка 5"><b>📖</b><span id="personality-note-title-5">5</span></button>
+        <button type="button" class="personality-note-btn" onclick="openPersonalityNote(6)" title="Заметка 6"><b>📖</b><span id="personality-note-title-6">6</span></button>
+    </div>
+    <button onclick="closeModal('personalityNotesMenuModal')" class="btn-sec">ЗАКРЫТЬ</button>
+</div></div>
+
+<div id="personalityNoteModal" class="modal"><div class="modal-content personality-note-modal">
+    <h3 id="personality-note-modal-title">Заметка</h3>
+    <textarea id="personality-note-textarea" class="personality-note-textarea" maxlength="8000" placeholder="Название заметки&#10;&#10;Текст заметки..." oninput="updatePersonalityNoteDraft()"></textarea>
+    <div class="personality-note-hint">Первая строка станет названием кнопки.</div>
+    <button onclick="savePersonalityNote()" class="btn-primary">СОХРАНИТЬ</button>
+    <button onclick="closeModal('personalityNoteModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="attackQuickFeatsModal" class="modal"><div class="modal-content">
+    <h3>Добавить фит в атаки</h3>
+    <div class="feat-view-meta">Выбери из “Главных фитов”. Чтобы убрать фит с панели, сними галочку “Отображать в атаках” в его настройках.</div>
+    <div id="attack-quick-feat-source-list" class="attack-quick-feat-source-list"></div>
+    <button onclick="closeModal('attackQuickFeatsModal')" class="btn-sec">ЗАКРЫТЬ</button>
+</div></div>
+
+<div id="featEditModal" class="modal"><div class="modal-content">
+    <h3 id="feat-edit-title">Настройка черты</h3>
+    <div id="feat-edit-meta" class="feat-view-meta"></div>
+    <input type="hidden" id="feat-slot-id">
+    <div class="feat-emoji-input-row">
+        <div class="feat-emoji-tools">
+            <label class="l">Смайлик</label>
+            <button type="button" id="feat-emoji-toggle" class="feat-emoji-select-btn empty" onclick="toggleFeatEmojiPicker()" title="Выбрать смайлик"><span id="feat-emoji-current">⭐</span></button>
+            <input type="hidden" id="feat-emoji" value="">
+        </div>
+        <div>
+            <label class="l">Название</label>
+            <input type="text" id="feat-name" placeholder="Название черты или особенности">
+        </div>
+    </div>
+    <div id="feat-emoji-picker-title" class="feat-emoji-picker-title">Выбор смайлика</div>
+    <div id="feat-emoji-picker" class="feat-emoji-picker"></div>
+    <label id="feat-show-in-attacks-wrap" class="feat-attack-toggle" for="feat-show-in-attacks">
+        <input type="checkbox" id="feat-show-in-attacks">
+        <span>Отображать в атаках</span>
+    </label>
+    <div id="feat-show-in-attacks-note" class="feat-attack-toggle-note">Доступно только для фитов, добавленных в “Главные фиты”.</div>
+    <label class="l">Краткое описание</label>
+    <textarea id="feat-short" maxlength="260" placeholder="Коротко: что делает эта черта"></textarea>
+    <label class="l">Полное описание</label>
+    <textarea id="feat-full" maxlength="4000" placeholder="Полный текст, условия, действия, частота и любые заметки"></textarea>
+    <button onclick="saveFeatSlot()" class="btn-primary">СОХРАНИТЬ</button>
+    <button onclick="clearFeatSlot()" class="btn-sec" style="background:var(--hp-red); border:none;">ОЧИСТИТЬ СЛОТ</button>
+    <button onclick="closeModal('featEditModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="featViewModal" class="modal"><div class="modal-content">
+    <h3 id="feat-view-title">Черта</h3>
+    <div id="feat-view-meta" class="feat-view-meta"></div>
+    <div class="feat-view-block">
+        <b id="feat-view-mode-label">Полное описание</b>
+        <div id="feat-view-main-text" class="feat-view-text"></div>
+    </div>
+    <div class="feat-view-actions">
+        <button id="feat-view-settings-btn" onclick="openFeatEditorFromView()" class="btn-primary feat-view-settings">⚙ НАСТРОИТЬ</button>
+        <button id="feat-view-toggle-btn" onclick="toggleFeatViewMode()" class="btn-sec feat-view-toggle">КРАТКО</button>
+    </div>
+    <button onclick="closeModal('featViewModal')" class="btn-sec">ЗАКРЫТЬ</button>
+</div></div>
+
+<div id="myFeatTemplateModal" class="modal"><div class="modal-content">
+    <h3>Настройка шаблона</h3>
+    <div class="feat-view-meta">Выбери фит из уже заполненных плашек других вкладок</div>
+    <div id="my-feat-source-list" class="my-feat-source-list"></div>
+    <button onclick="deleteMyFeatTemplate()" class="btn-sec" style="background:var(--hp-red); border:none;">УДАЛИТЬ ШАБЛОН</button>
+    <button onclick="closeModal('myFeatTemplateModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="equipmentItemModal" class="modal"><div class="modal-content">
+    <div class="equipment-modal-head">
+        <h3 id="equipment-edit-title">Предмет</h3>
+        <label class="equipment-light-check" for="equipment-item-light" title="Лёгкий предмет: вес 0">
+            <input type="checkbox" id="equipment-item-light" onchange="setEquipmentLight(this.checked)">
+            <span class="equipment-light-mark">Л</span>
+        </label>
+    </div>
+    <input type="hidden" id="equipment-item-id">
+    <input type="hidden" id="equipment-item-category">
+    <div class="feat-emoji-input-row">
+        <div class="feat-emoji-tools">
+            <label class="l">Иконка</label>
+            <button type="button" id="equipment-icon-toggle" class="feat-emoji-select-btn empty" onclick="toggleEquipmentIconPicker()" title="Выбрать иконку"><span id="equipment-icon-current"></span></button>
+            <input type="hidden" id="equipment-item-icon" value="">
+        </div>
+        <div>
+            <label class="l">Название</label>
+            <input type="text" id="equipment-item-name" placeholder="Верёвка, зелье, корона">
+        </div>
+    </div>
+    <div id="equipment-icon-picker-title" class="feat-emoji-picker-title">Выбор иконки</div>
+    <div id="equipment-icon-picker" class="feat-emoji-picker"></div>
+    <label class="l">Тип предмета</label>
+    <select id="equipment-item-type" class="equipment-type-select" onchange="equipmentItemTypeChanged()"></select>
+    <label id="equipment-equipped-wrap" class="equipment-equipped-check" for="equipment-item-equipped">
+        <input type="checkbox" id="equipment-item-equipped">
+        <span>Экипировано</span>
+    </label>
+    <label class="equipment-inline-toggle" for="equipment-show-in-attacks">
+        <input type="checkbox" id="equipment-show-in-attacks">
+        <span>Показывать в атаках</span>
+    </label>
+    <div id="equipment-weight-row" class="equipment-weight-row">
+        <div>
+            <label class="l">Вес</label>
+            <input type="number" id="equipment-item-bulk" min="0" step="1" value="1">
+        </div>
+    </div>
+    <div id="equipment-consumable-settings" class="equipment-type-settings">
+        <div class="equipment-setting-grid">
+            <div><label class="l">Количество</label><input type="number" id="equipment-item-quantity" min="0" step="1" value="1"></div>
+            <div><label class="l">Тип</label><select id="equipment-consumable-type" onchange="syncEquipmentConsumableHealField()"><option value="other">Обычный</option><option value="healingPotion">Зелье лечения</option><option value="ammo">Снаряды</option></select></div>
+        </div>
+        <label id="equipment-consumable-heal-label" class="l" style="margin-top:8px;">Бросок лечения</label>
+        <input type="text" id="equipment-consumable-heal" oninput="this.value=this.value.replace(/d/gi, 'к')" placeholder="1к8+4 или 8" value="0">
+    </div>
+    <div id="equipment-armor-settings" class="equipment-type-settings">
+        <div class="equipment-setting-grid equipment-armor-grid">
+            <div class="equipment-armor-type-row"><label class="l">Тип брони</label><select id="equipment-armor-type"></select></div>
+            <div><label class="l">Броня</label><input type="number" id="equipment-armor-item" value="0"></div>
+            <div><label class="l">Ловкость</label><input type="number" id="equipment-armor-cap" value="0"></div>
+            <div><label class="l">Штраф скорости</label><input type="number" id="equipment-armor-speed-pen" value="0"></div>
+            <div><label class="l">Штраф</label><input type="number" id="equipment-armor-pen" value="0"></div>
+        </div>
+    </div>
+    <div id="equipment-shield-settings" class="equipment-type-settings">
+        <div class="equipment-setting-grid">
+            <div><label class="l">Бонус КЗ</label><input type="number" id="equipment-shield-bonus" value="0"></div>
+            <div><label class="l">Твёрдость</label><input type="number" id="equipment-shield-hard" value="0"></div>
+            <div><label class="l">Макс ПЗ</label><input type="number" id="equipment-shield-hp-max" value="0" oninput="updateEquipmentShieldPp()"></div>
+            <div><label class="l">ПП</label><input type="number" id="equipment-shield-pp" value="0" disabled style="opacity:0.6"></div>
+        </div>
+        <label class="l" style="margin-top:8px;">Текущее ПЗ</label>
+        <input type="number" id="equipment-shield-hp-cur" value="0">
+    </div>
+    <div id="equipment-weapon-settings" class="equipment-type-settings">
+        <div class="equipment-segment">
+            <button type="button" id="equipment-weapon-melee-btn" onclick="setEquipmentWeaponRange('melee')">Ближний</button>
+            <button type="button" id="equipment-weapon-ranged-btn" onclick="setEquipmentWeaponRange('ranged')">Дальний</button>
+        </div>
+        <input type="hidden" id="equipment-weapon-range" value="melee">
+        <div id="equipment-ammo-settings" class="equipment-ammo-settings">
+            <label class="l">Снаряды</label>
+            <select id="equipment-weapon-ammo-item"></select>
+            <label class="equipment-inline-toggle" for="equipment-weapon-charges-enabled">
+                <input type="checkbox" id="equipment-weapon-charges-enabled" onchange="syncEquipmentWeaponChargeSection()">
+                <span>Использовать заряды</span>
+            </label>
+            <div id="equipment-weapon-charge-settings" class="equipment-ammo-settings">
+                <label class="l">Количество зарядов</label>
+                <input type="number" id="equipment-weapon-charge-max" min="1" step="1" value="1">
+                <input type="hidden" id="equipment-weapon-charge-current" value="0">
+            </div>
+        </div>
+        <label class="l">Название атаки</label>
+        <input type="text" id="equipment-weapon-name" placeholder="Длинный меч">
+        <div class="equipment-setting-grid three">
+            <div><label class="l">Характ.</label><select id="equipment-weapon-stat"><option value="str">СИЛ</option><option value="dex">ЛОВ</option><option value="con">ТЕЛ</option><option value="int">ИНТ</option><option value="wis">МУД</option><option value="cha">ХАР</option></select></div>
+            <div><label class="l">Тип оружия</label><select id="equipment-weapon-group"></select></div>
+            <div><label class="l">Бонус</label><input type="number" id="equipment-weapon-item" value="0"></div>
+        </div>
+        <div class="equipment-setting-grid three" style="margin-top:8px;">
+            <div><label class="l">Урон</label><input type="text" id="equipment-weapon-dmg" oninput="this.value=this.value.replace(/d/gi, 'к')" placeholder="1к8+4"></div>
+            <div><label class="l">Крит</label><input type="text" id="equipment-weapon-crit" oninput="this.value=this.value.replace(/d/gi, 'к')" placeholder="2к8+8"></div>
+            <div><label class="l">ШМА</label><input type="number" id="equipment-weapon-map" value="-5" step="1"></div>
+        </div>
+        <label class="l" style="margin-top:8px;">Тип урона</label>
+        <select id="equipment-weapon-damage-type"></select>
+        <button type="button" id="equipment-weapon-tags-toggle-btn" class="btn-sec atk-modal-tags-toggle" onclick="toggleEquipmentWeaponTagsSection()">ХЕШТЕГИ ▼</button>
+        <div id="equipment-weapon-tags-section" class="atk-modal-tags-wrap">
+            <label class="l">Хэштеги удара</label>
+            <div id="equipment-weapon-tags-checklist" class="atk-modal-tags-grid"></div>
+        </div>
+        <label class="equipment-inline-toggle" for="equipment-weapon-second-enabled">
+            <input type="checkbox" id="equipment-weapon-second-enabled" onchange="syncEquipmentSecondAttackSection()">
+            <span>Добавить вторую атаку</span>
+        </label>
+        <div id="equipment-second-attack" class="equipment-second-attack">
+            <label class="l">Название атаки 2</label>
+            <input type="text" id="equipment-weapon2-name" placeholder="Вторая атака">
+            <div class="equipment-setting-grid three">
+                <div><label class="l">Характ.</label><select id="equipment-weapon2-stat"><option value="str">СИЛ</option><option value="dex">ЛОВ</option><option value="con">ТЕЛ</option><option value="int">ИНТ</option><option value="wis">МУД</option><option value="cha">ХАР</option></select></div>
+                <div><label class="l">Тип оружия</label><select id="equipment-weapon2-group"></select></div>
+                <div><label class="l">Бонус</label><input type="number" id="equipment-weapon2-item" value="0"></div>
+            </div>
+            <div class="equipment-setting-grid three" style="margin-top:8px;">
+                <div><label class="l">Урон</label><input type="text" id="equipment-weapon2-dmg" oninput="this.value=this.value.replace(/d/gi, 'к')" placeholder="1к8+4"></div>
+                <div><label class="l">Крит</label><input type="text" id="equipment-weapon2-crit" oninput="this.value=this.value.replace(/d/gi, 'к')" placeholder="2к8+8"></div>
+                <div><label class="l">ШМА</label><input type="number" id="equipment-weapon2-map" value="-5" step="1"></div>
+            </div>
+            <label class="l" style="margin-top:8px;">Тип урона</label>
+            <select id="equipment-weapon2-damage-type"></select>
+        </div>
+    </div>
+    <label class="l">Короткое описание</label>
+    <textarea id="equipment-item-short" maxlength="260" placeholder="Коротко: что это и зачем"></textarea>
+    <label class="l">Полное описание</label>
+    <textarea id="equipment-item-full" maxlength="4000" placeholder="Свойства, заметки, цена, где лежит"></textarea>
+    <button onclick="saveEquipmentItem()" class="btn-primary">СОХРАНИТЬ</button>
+    <button onclick="deleteEquipmentItem()" class="btn-sec" style="background:var(--hp-red); border:none;">УДАЛИТЬ</button>
+    <button onclick="closeModal('equipmentItemModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="equipmentViewModal" class="modal"><div class="modal-content">
+    <h3 id="equipment-view-title">Предмет</h3>
+    <div id="equipment-view-meta" class="feat-view-meta"></div>
+    <div class="feat-view-block">
+        <b id="equipment-view-mode-label">Полное описание</b>
+        <div id="equipment-view-main-text" class="feat-view-text"></div>
+    </div>
+    <div class="equipment-view-actions">
+        <button onclick="openEquipmentEditorFromView()" class="btn-primary equipment-view-settings">⚙ НАСТРОИТЬ</button>
+        <button id="equipment-view-toggle-btn" onclick="toggleEquipmentViewMode()" class="btn-sec equipment-view-toggle">КРАТКО</button>
+    </div>
+    <button onclick="closeModal('equipmentViewModal')" class="btn-sec">ЗАКРЫТЬ</button>
+</div></div>
+
+<div id="equipmentBackpackModal" class="modal"><div class="modal-content">
+    <h3>Рюкзак</h3>
+    <div class="feat-view-meta">Выбери предмет из остальных вкладок. Он исчезнет из своей вкладки и начнёт считаться внутри рюкзака.</div>
+    <div id="equipment-backpack-source-list" class="equipment-source-list"></div>
+    <button onclick="deleteBackpackSlot()" class="btn-sec" style="background:var(--hp-red); border:none;">УДАЛИТЬ ШАБЛОН</button>
+    <button onclick="closeModal('equipmentBackpackModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="currencyModal" class="modal"><div class="modal-content">
+    <h3>Монеты</h3>
+    <div class="equipment-currency-grid">
+        <div><label class="l">пм</label><input type="number" id="coin-pp" min="0" step="1" value="0" oninput="updateCurrencyTotal()"></div>
+        <div><label class="l">зм</label><input type="number" id="coin-gp" min="0" step="1" value="0" oninput="updateCurrencyTotal()"></div>
+        <div><label class="l">см</label><input type="number" id="coin-sp" min="0" step="1" value="0" oninput="updateCurrencyTotal()"></div>
+        <div><label class="l">мм</label><input type="number" id="coin-cp" min="0" step="1" value="0" oninput="updateCurrencyTotal()"></div>
+    </div>
+    <div class="equipment-currency-total">
+        <span>Итого</span><b id="coin-total-gp">0,00 зм</b>
+        <small id="coin-total-breakdown">0 пм · 0 зм · 0 см · 0 мм</small>
+    </div>
+    <div class="equipment-currency-actions">
+        <button onclick="normalizeCurrencyInputs()" class="btn-sec">РАЗЛОЖИТЬ</button>
+        <button onclick="saveCurrency()" class="btn-primary">СОХРАНИТЬ</button>
+    </div>
+    <button onclick="closeModal('currencyModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="equipmentBulkSettingsModal" class="modal"><div class="modal-content">
+    <h3>Макс вес</h3>
+    <label class="l">Бонус к максимальному весу</label>
+    <input type="number" id="equipment-bulk-bonus" step="1" value="0" oninput="updateEquipmentBulkSettingsPreview()">
+    <div id="equipment-bulk-preview" class="equipment-currency-total">
+        <span>Пороги</span><b>5 / 10</b>
+        <small>без бонуса</small>
+    </div>
+    <button onclick="saveEquipmentBulkSettings()" class="btn-primary">СОХРАНИТЬ</button>
+    <button onclick="closeModal('equipmentBulkSettingsModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="avatarMenuModal" class="modal"><div class="modal-content">
+    <h3>Герой</h3>
+    <div class="menu-item" onclick="closeModal('avatarMenuModal'); openCharacterMenu()" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:8px; cursor:pointer;">📚 Персонажи</div>
+    <div class="menu-item" onclick="document.getElementById('fileInput').click()" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:8px; cursor:pointer;">🖼️ Загрузить аватар</div>
+    <div class="menu-item" onclick="exportJSON()" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:8px; cursor:pointer;">📤 Сохранить в JSON</div>
+    <div class="menu-item" onclick="closeModal('avatarMenuModal'); openModal('sheetSettingsModal')" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:8px; cursor:pointer;">⚙️ Настройки</div>
+    <input type="file" id="fileInput" style="display:none" onchange="handleImg(this)" accept="image/*">
+    <input type="file" id="jsonInput" style="display:none" onchange="importJSON(this)" accept=".json">
+    <input type="file" id="jsonNewInput" style="display:none" onchange="importJSON(this, true)" accept=".json">
+    <button onclick="closeModal('avatarMenuModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="sheetSettingsModal" class="modal"><div class="modal-content">
+    <h3>Настройки листа</h3>
+    <label id="use-magic-wrap" class="equipment-inline-toggle avatar-menu-toggle" for="use-magic">
+        <input type="checkbox" id="use-magic" onchange="toggleSheetSettings()">
+        <span>Использует магию</span>
+    </label>
+    <label id="use-focus-wrap" class="equipment-inline-toggle avatar-menu-toggle" for="use-focus">
+        <input type="checkbox" id="use-focus" onchange="toggleSheetSettings()">
+        <span>Использует фокус</span>
+    </label>
+    <div id="focus-points-setting" class="focus-points-setting">
+        <span>Очки фокуса</span>
+        <input type="number" id="focus-points-max" min="1" max="3" value="1" oninput="saveFocusPointsSetting()">
+    </div>
+    <button onclick="closeModal('sheetSettingsModal')" class="btn-primary">ГОТОВО</button>
+</div></div>
+
+<div id="cropModal" class="modal"><div class="modal-content">
+    <h3>Обрезать 1:1</h3>
+    <div style="width:100%; aspect-ratio:1/1; background:#000; position:relative; overflow:hidden; border-radius:12px;"><canvas id="cropCanvas" style="display:none;"></canvas><img id="crop-preview" style="max-width:100%;"></div>
+    <button onclick="confirmCrop()" class="btn-primary" style="margin-top:15px">ПРИМЕНИТЬ</button>
+    <button onclick="closeModal('cropModal')" class="btn-sec">ОТМЕНА</button>
+</div></div>
+
+<div id="hpModal" class="modal"><div class="modal-content">
+    <div class="hp-modal-head">
+        <h3>Здоровье</h3>
+        <div class="hp-modal-actions">
+            <button type="button" id="hp-keypad-toggle" class="hp-keypad-toggle" onclick="toggleHpKeypad()" title="Развернуть калькулятор HP">⌨<span>▼</span></button>
+            <button type="button" class="hp-settings-btn" onclick="openModal('hpSettingsModal')" title="Настройки здоровья">⚙</button>
+        </div>
+    </div>
+
+    <div class="hp-status-row">
+        <div class="hp-current-ac" title="Текущий КЗ в калькуляторе здоровья">
+            <span class="l">КЗ</span>
+            <span id="hp-modal-ac" class="v">10</span>
+        </div>
+        <div class="dot-container hp-wounds-dots"><div class="dot wound-dot" id="w-dot-1" onclick="setWounds(1)"></div><div class="dot wound-dot" id="w-dot-2" onclick="setWounds(2)"></div><div class="dot wound-dot" id="w-dot-3" onclick="setWounds(3)"></div></div><label class="hp-crit-damage-toggle" id="hp-critical-damage-label" title="Критический урон"><input type="checkbox" id="hp-critical-damage" onchange="toggleHpCriticalDamage()"><span>К</span></label>
+    </div>
+    <input type="hidden" id="in-wounds" value="0">
+
+    <div class="hp-modal-bars">
+        <div class="hp-modal-bar-label"><span>Здоровье</span><span id="hp-modal-numbers">0 / 0</span></div>
+        <div class="hp-modal-bar-track"><div id="hp-modal-fill-bar" class="hp-modal-bar-fill"></div></div>
+        <div id="hp-modal-shield-block" class="hp-modal-shield-block">
+            <div class="hp-modal-bar-label"><span>Щит</span><span id="hp-modal-shield-numbers">0 / 0</span></div>
+            <div class="hp-modal-bar-track"><div id="hp-modal-shield-fill" class="hp-modal-bar-fill hp-modal-shield-fill"></div></div>
+        </div>
+    </div>
+
+    <div id="dying-ui" class="dying-wrap"><div class="dying-dots"><div class="dying-dot" id="d-dot-1" onclick="setDyingLevel(1)"></div><div class="dying-dot" id="d-dot-2" onclick="setDyingLevel(2)"></div><div class="dying-dot" id="d-dot-3" onclick="setDyingLevel(3)"></div><div class="dying-dot" id="d-dot-4" onclick="setDyingLevel(4)"></div></div><div id="death-roll-result" class="death-roll-result"></div><div id="death-status"></div><button id="death-check-btn" onclick="deathCheck()" class="btn-primary" style="background:#555; margin-top:10px">ПРОВЕРКА СМЕРТИ</button></div>
+
+    <div id="shield-use-wrap" class="shield-check-row hp-shield-controls">
+        <label class="shield-check-option" id="shield-raised-label" for="shield-raised"><input type="checkbox" id="shield-raised" onchange="toggleShieldRaised()"><span class="l">Щит поднят</span></label>
+        <label class="shield-check-option" id="use-shield-damage-label" for="use-shield-damage"><input type="checkbox" id="use-shield-damage" onchange="toggleShieldBlock()"><span class="l">Блокировать</span></label>
+    </div>
+
+    <div id="hp-keypad-shell" class="hp-keypad-shell">
+        <div class="hp-keypad-top">
+            <input type="text" id="hp-calc-val" class="hp-keypad-input" value="" placeholder="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" oninput="setHpKeypadValue(this.value)">
+            <div class="hp-keypad-actions">
+                <button type="button" class="hp-key hp-key-action hp-key-heal" onclick="applyHpKeypad(1)">Лечение</button>
+                <button type="button" class="hp-key hp-key-action hp-key-damage" onclick="applyHpKeypad(-1)">Урон</button>
+            </div>
+        </div>
+
+        <div id="hp-keypad-body" class="hp-keypad-body">
+            <div class="hp-keypad-grid">
+                <button type="button" class="hp-key" onclick="hpKeypadPress('7')">7</button>
+                <button type="button" class="hp-key" onclick="hpKeypadPress('8')">8</button>
+                <button type="button" class="hp-key" onclick="hpKeypadPress('9')">9</button>
+                <button type="button" class="hp-key" onclick="hpKeypadPress('4')">4</button>
+                <button type="button" class="hp-key" onclick="hpKeypadPress('5')">5</button>
+                <button type="button" class="hp-key" onclick="hpKeypadPress('6')">6</button>
+                <button type="button" class="hp-key" onclick="hpKeypadPress('1')">1</button>
+                <button type="button" class="hp-key" onclick="hpKeypadPress('2')">2</button>
+                <button type="button" class="hp-key" onclick="hpKeypadPress('3')">3</button>
+                <button type="button" class="hp-key hp-key-small hp-key-clear" onclick="clearHpKeypad()">C</button>
+                <button type="button" class="hp-key" onclick="hpKeypadPress('0')">0</button>
+                <button type="button" class="hp-key hp-key-small hp-key-clear" onclick="hpKeypadBackspace()">⌫</button>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="closeModal('hpModal')" class="btn-sec">ЗАКРЫТЬ</button>
+</div></div>
+
+<div id="hpSettingsModal" class="modal"><div class="modal-content">
+    <h3>Настройки здоровья</h3>
+    <label class="l">Текущие ОЗ</label>
+    <input type="number" id="in-hp-cur" oninput="clampCurrentHPInput(); saveAll()">
+    <label class="l">ОЗ народа</label>
+    <input type="number" id="in-hp-anc" value="8" oninput="saveAll()">
+    <label class="l">ОЗ класса</label>
+    <input type="number" id="in-hp-cls" value="10" oninput="saveAll()">
+    <button onclick="closeModal('hpSettingsModal')" class="btn-primary">ГОТОВО</button>
+</div></div>
+
+<div id="acModal" class="modal"><div class="modal-content">
+    <h3>Защита</h3>
+    <div id="equipment-ac-note" class="equipment-derived-note" style="display:none;">изменения в снаряжении</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><div><label class="l">Броня</label><input type="number" id="in-ac-item" oninput="saveAll()"></div><div><label class="l">Штраф</label><input type="number" id="in-ac-pen" oninput="saveAll()"></div></div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><div><label class="l">Ловкость (кап)</label><input type="number" id="in-ac-cap" oninput="saveAll()"></div><div><label class="l">Владение</label><input type="number" id="in-ac-prof" disabled style="opacity:0.6"></div></div>
+    <div style="margin-top:20px; padding:15px; border-radius:16px; background: rgba(59,130,246,0.1); border:1px solid var(--shield-blue); display:flex; align-items:center; gap:10px;"><input type="checkbox" id="has-shield" onchange="toggleShieldCheckbox(this.checked)"><label for="has-shield" class="l">Использовать щит</label></div>
+    <button onclick="closeModal('acModal')" class="btn-primary" style="margin-top:15px">ГОТОВО</button>
+</div></div>
+
+<div id="shieldModal" class="modal"><div class="modal-content">
+    <h3>Параметры щита</h3>
+    <div id="equipment-shield-note" class="equipment-derived-note" style="display:none;">изменения в снаряжении</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><div><label class="l">Бонус КЗ</label><input type="number" id="sh-bonus" oninput="saveAll()"></div><div><label class="l">Твёрдость</label><input type="number" id="sh-hard" oninput="saveAll()"></div></div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><div><label class="l">Макс ПЗ</label><input type="number" id="sh-hp-max" oninput="saveAll()"></div><div><label class="l">ПП (Авто)</label><input type="number" id="sh-pp-auto" disabled style="opacity:0.6"></div></div>
+    <label class="l">Текущее ПЗ</label><input type="number" id="sh-hp-cur" oninput="saveAll()">
+    <button onclick="repairShield()" class="btn-primary">ПОЧИНИТЬ</button><button onclick="closeModal('shieldModal')" class="btn-sec">ЗАКРЫТЬ</button>
+</div></div>
+
+<div id="profileModal" class="modal"><div class="modal-content"><h3>Профиль</h3><label class="l">Имя</label><input type="text" id="in-name" oninput="saveAll()"><div style="display:flex; gap:12px"><div style="flex:1"><label class="l">Народ</label><input type="text" id="in-anc" oninput="saveAll()"></div><div style="flex:1"><label class="l">Класс</label><input type="text" id="in-cls" oninput="saveAll()"></div></div><div style="display:flex; gap:12px"><div><label class="l">Уровень</label><input type="number" id="in-lvl" min="1" max="20" oninput="this.value = Math.min(20, Math.max(1, parseInt(this.value)||1)); saveAll()" onblur="this.value = Math.min(20, Math.max(1, parseInt(this.value)||1)); saveAll()"></div><div><label class="l">Скорость</label><input type="number" id="in-speed" oninput="saveAll()"></div></div><label class="l">Опыт</label><input type="number" id="in-exp" oninput="saveAll()"><button onclick="closeModal('profileModal')" class="btn-primary">СОХРАНИТЬ</button></div></div>
+
+<div id="abilityModal" class="modal"><div class="modal-content"><h3 id="ab-modal-title"></h3><input type="hidden" id="ab-modal-key"><label class="l">Модификатор</label><input type="number" id="ab-modal-val" min="-5" max="10" oninput="previewAbilityModal()"><div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;"><input type="checkbox" id="ab-modal-half"><label for="ab-modal-half" class="l">Повышение ½</label></div><div id="ab-modal-lores" style="display:none"><label class="l">Знания</label><input type="text" id="in-lore-1" placeholder="Знание 1"><input type="text" id="in-lore-2" placeholder="Знание 2"><input type="text" id="in-lore-3" placeholder="Знание 3"></div><button onclick="saveAbilityModal()" class="btn-primary">ГОТОВО</button></div></div>
+
+<div id="skillModal" class="modal"><div class="modal-content"><h3 id="sk-modal-title"></h3><input type="hidden" id="sk-modal-id"><label class="l">Бонус предмета</label><input type="number" id="sk-modal-item"><button onclick="saveSkillModal()" class="btn-primary">ГОТОВО</button></div></div>
+
+<div id="spellModal" class="modal"><div class="modal-content">
+    <h3 id="spell-edit-title">Заклинание</h3>
+    <input type="hidden" id="spell-id">
+    <label class="l">Тип</label>
+    <select id="spell-category" onchange="syncSpellModalFields()"></select>
+    <label class="l">Название</label>
+    <input type="text" id="spell-name" placeholder="Огненный шар">
+    <div class="atk-modal-grid">
+        <div id="spell-rank-wrap">
+            <label class="l">Ранг</label>
+            <select id="spell-rank"></select>
+        </div>
+        <div>
+            <label class="l">Действия</label>
+            <select id="spell-actions"></select>
+        </div>
+        <div id="spell-uses-wrap">
+            <label class="l">Ресурс</label>
+            <input type="number" id="spell-uses-max" min="1" max="99" value="1">
+        </div>
+    </div>
+    <label class="l">Коротко</label>
+    <textarea id="spell-short" maxlength="320" placeholder="Что делает"></textarea>
+    <label class="l">Полное описание</label>
+    <textarea id="spell-full" maxlength="4000" placeholder="Детали, спасбросок, длительность"></textarea>
+    <div class="atk-modal-actions">
+        <button onclick="saveSpell()" class="btn-primary">СОХРАНИТЬ</button>
+        <button onclick="closeModal('spellModal')" class="btn-sec">ОТМЕНА</button>
+    </div>
+    <button onclick="deleteSpell()" class="btn-sec" style="background:var(--hp-red); border:none;">УДАЛИТЬ</button>
+</div></div>
+
+<div id="restModal" class="modal"><div class="modal-content" style="text-align:center;">
+    <span style="font-size:40px;">🌙</span><h3>Долгий отдых</h3><div id="rest-hp-msg" style="font-size:28px; font-weight:900; color:#10b981; margin:10px 0;">+0 HP</div>
+    <div id="rest-wound-msg" style="color:var(--hp-red); font-weight:bold; margin-bottom:15px; display:none;">Раны исцелены!</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><button onclick="doRest()" class="btn-primary" style="background:#10b981;">ОТДОХНУТЬ</button><button onclick="closeModal('restModal')" class="btn-sec">ОТМЕНА</button></div>
+</div></div>
+
+<div id="pageNavModal" class="modal"><div class="modal-content">
+    <h3>Перейти на страницу</h3>
+    <div class="menu-item" onclick="navClick(0)" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:8px; cursor:pointer; font-weight: 700;">Характеристики</div>
+    <div class="menu-item" onclick="navClick(1)" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:8px; cursor:pointer; font-weight: 700;">Атаки</div>
+    <div class="menu-item" onclick="navClick(2)" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:8px; cursor:pointer; font-weight: 700;">Фиты</div>
+    <div class="menu-item" onclick="navClick(3)" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:8px; cursor:pointer; font-weight: 700;">Снаряжение</div>
+    <div class="menu-item" onclick="navClick(4)" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:8px; cursor:pointer; font-weight: 700;">Личность</div>
+    <div class="menu-item" id="page-nav-magic" onclick="navClick(5)" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:8px; cursor:pointer; font-weight: 700;">Магия</div>
+    <button onclick="closeModal('pageNavModal')" class="btn-sec" style="margin-top: 15px;">ОТМЕНА</button>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/app.js"></script>
+
+<div class="footer-spacer"></div>
+</body>
+</html>
