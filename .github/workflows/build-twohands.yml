@@ -17,7 +17,9 @@ jobs:
           gradle-version: '9.7.1'
       - name: Restore source tree
         run: |
-          cat .ci/twohands.part0 .ci/twohands.part1 > /tmp/twohands-src.tar.gz
+          cat .ci/b64-0 .ci/b64-1 .ci/b64-2 .ci/b64-3 .ci/b64-4 .ci/b64-5 .ci/b64-6 > /tmp/src.b64
+          echo "ee8237b5dcc9ce26b7fe49e3776f2f0ee55e8662ddd86a78f01994f8a828befd  /tmp/src.b64" | sha256sum -c -
+          base64 -d /tmp/src.b64 > /tmp/twohands-src.tar.gz
           tar -xzf /tmp/twohands-src.tar.gz
       - name: Build
         run: gradle build --stacktrace
