@@ -24,30 +24,13 @@ jobs:
         with:
           gradle-version: '9.7.1'
 
-      - name: Verify payload chunks
+      - name: Verify payload
         shell: bash
         run: |
-          cat > /tmp/chunks.sha256 <<'EOF'
-          b5675a1d694b7030c27512a31b91d9381581cbceda2d98a6e31ab0b6eb339cca  tmp/twohands_payload_00.b64
-          7df36c0feda022d6e52959fa16f3614b0d2913e59146d44280b286aa963cc2d1  tmp/twohands_payload_01.b64
-          ea1039736b7616e477e7bb281e555b0102b4b3085af8c232fe0714ce9e8b583b  tmp/twohands_payload_02.b64
-          8d6fbe495adbfe49035aff0493f231267734acd31886bca1545430b1487d58f9  tmp/twohands_payload_03.b64
-          88fdd9802431801ab0848d3044b659f4b2c5d545bc6dc1acd3457985439cb980  tmp/twohands_payload_04.b64
-          bb19e33b9b46f884f0230d75cedf7d96c0f05fb2f7e95a49a8d46e7bd6c42675  tmp/twohands_payload_05.b64
-          10d115b5517ecaa4cd552fa869064fcdb5851cc48a2afd00eb8f0488dd7bcfbd  tmp/twohands_payload_06.b64
-          192979553ddfda5ebf2df5841f654f81ac7b40ae2eb7af1314d6832a05d57fe2  tmp/twohands_payload_07.b64
-          34cb7d91a480563ce25678ca09ccb9447fc332fa3485c90d9d182e5a8927b49f  tmp/twohands_payload_08.b64
-          59191363b2f1fc0ae6cb07b9081c42a58955ecbc4539dc04f3872c2a27512036  tmp/twohands_payload_09.b64
-          d5340f98d0df062387869e505eac91b9ddaf88f60a7d538b1ebff886d7d1b40b  tmp/twohands_payload_10.b64
-          680faedf54f37db1ea5ded69b01277a8cd84bc3fe2b0f6fe2581ce0fae03c800  tmp/twohands_payload_11.b64
-          dda150367318d3cb084302b995c32d4d7c868ed9a819b3f36b6d39c9daba7723  tmp/twohands_payload_12.b64
-          EOF
-          sha256sum -c /tmp/chunks.sha256
-
-      - name: Reconstruct source
-        shell: bash
-        run: |
-          cat tmp/twohands_payload_*.b64 | base64 -d > /tmp/twohands-source.zip
+          echo "f65589bdb8458e414c547ef1755e5c9aa15e720f33e9b3c956814a7e3e8599e4  tmp/twohands_payload_10a.b64" | sha256sum -c -
+          echo "15c9ac9bf715382407f0f0f75d812568bb6d59f2977c067d3a383c0355fbb373  tmp/twohands_payload_10b.b64" | sha256sum -c -
+          echo "e1733c453b0b93c2934d8a4df612c9a7a7b17182433b5ea3eb29129f1d934564  tmp/twohands_payload_10c.b64" | sha256sum -c -
+          cat tmp/twohands_payload_00.b64 tmp/twohands_payload_01.b64 tmp/twohands_payload_02.b64 tmp/twohands_payload_03.b64 tmp/twohands_payload_04.b64 tmp/twohands_payload_05.b64 tmp/twohands_payload_06.b64 tmp/twohands_payload_07.b64 tmp/twohands_payload_08.b64 tmp/twohands_payload_09.b64 tmp/twohands_payload_10a.b64 tmp/twohands_payload_10b.b64 tmp/twohands_payload_10c.b64 tmp/twohands_payload_11.b64 tmp/twohands_payload_12.b64 | base64 -d > /tmp/twohands-source.zip
           echo "2b1bd2d5beb0192cfd62043e4bafa8701254136c96e6cdd97746e8adda8aede7  /tmp/twohands-source.zip" | sha256sum -c -
           unzip -t /tmp/twohands-source.zip
           mkdir -p modsrc
