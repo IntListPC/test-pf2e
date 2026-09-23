@@ -1,50 +1,8 @@
 name: Two Hands temporary build
-
 on:
-  push:
-    branches:
-      - chatgpt-twohands-build-20260924
   workflow_dispatch:
-
 jobs:
-  build:
-    runs-on: ubuntu-24.04
+  hold:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup JDK 25
-        uses: actions/setup-java@v5
-        with:
-          java-version: '25'
-          distribution: 'microsoft'
-
-      - name: Setup Gradle 9.7.1
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: '9.7.1'
-
-      - name: Verify payload
-        shell: bash
-        run: |
-          echo "f65589bdb8458e414c547ef1755e5c9aa15e720f33e9b3c956814a7e3e8599e4  tmp/twohands_payload_10a.b64" | sha256sum -c -
-          echo "15c9ac9bf715382407f0f0f75d812568bb6d59f2977c067d3a383c0355fbb373  tmp/twohands_payload_10b.b64" | sha256sum -c -
-          echo "e1733c453b0b93c2934d8a4df612c9a7a7b17182433b5ea3eb29129f1d934564  tmp/twohands_payload_10c.b64" | sha256sum -c -
-          cat tmp/twohands_payload_00.b64 tmp/twohands_payload_01.b64 tmp/twohands_payload_02.b64 tmp/twohands_payload_03.b64 tmp/twohands_payload_04.b64 tmp/twohands_payload_05.b64 tmp/twohands_payload_06.b64 tmp/twohands_payload_07.b64 tmp/twohands_payload_08.b64 tmp/twohands_payload_09.b64 tmp/twohands_payload_10a.b64 tmp/twohands_payload_10b.b64 tmp/twohands_payload_10c.b64 tmp/twohands_payload_11.b64 tmp/twohands_payload_12.b64 | base64 -d > /tmp/twohands-source.zip
-          echo "2b1bd2d5beb0192cfd62043e4bafa8701254136c96e6cdd97746e8adda8aede7  /tmp/twohands-source.zip" | sha256sum -c -
-          unzip -t /tmp/twohands-source.zip
-          mkdir -p modsrc
-          unzip -q /tmp/twohands-source.zip -d modsrc
-
-      - name: Build
-        working-directory: modsrc
-        run: gradle --no-daemon build
-
-      - name: List output
-        run: ls -lah modsrc/build/libs/
-
-      - name: Upload JAR
-        uses: actions/upload-artifact@v7
-        with:
-          name: twohands-jar
-          path: modsrc/build/libs/*.jar
+      - run: echo "Payload upload in progress"
